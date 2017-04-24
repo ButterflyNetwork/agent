@@ -157,6 +157,14 @@ function buildkite-local-hook {
   buildkite-hook-exit-on-error
 }
 
+function buildkite-unlock-build-folder {
+    if [[ $(uname) == 'Darwin' ]]; then
+        # Unlock user immutable files (ex: Xcode intermediate build products).
+        buildkite-debug "~~~ Unlocking user immutable files"
+        find . -flags uchg -exec chflags nouchg {} \;
+    fi
+}
+
 function buildkite-git-clean {
   BUILDKITE_GIT_CLEAN_FLAGS=${BUILDKITE_GIT_CLEAN_FLAGS:--fdq}
   buildkite-run git clean "$BUILDKITE_GIT_CLEAN_FLAGS"
@@ -273,6 +281,9 @@ else
     BUILDKITE_GIT_CLONE_FLAGS=${BUILDKITE_GIT_CLONE_FLAGS:--v}
     buildkite-run git clone "$BUILDKITE_GIT_CLONE_FLAGS" -- "$BUILDKITE_REPO" .
   fi
+
+  # Unlock build folder (ex: Xcode build products)
+  buildkite-unlock-build-folder
 
   # Git clean prior to checkout
   buildkite-git-clean
